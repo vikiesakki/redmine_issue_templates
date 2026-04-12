@@ -69,6 +69,11 @@ class NoteTemplatesController < ApplicationController
 
       # prevent to load if the template visibility does not match.
       raise ActiveRecord::RecordNotFound unless note_template.loadable?(user_id: User.current.id, project_id: project_id)
+    elsif template_type.present? && template_type == 'multiple'
+      note_template = MultipleNoteTemplate.find(note_template_id)
+
+      # prevent to load if the template visibility does not match.
+      # raise ActiveRecord::RecordNotFound unless note_template.loadable?(user_id: User.current.id, project_id: project_id)
     else
       note_template = NoteTemplate.find(note_template_id)
       # prevent to load if the template visibility does not match.
@@ -92,11 +97,17 @@ class NoteTemplatesController < ApplicationController
       user_id: User.current.id, project_id: project_id, tracker_id: tracker_id
     ).sorted
 
+    multiple_note_templates = MultipleNoteTemplate.for_tracker(tracker_id)
+
     respond_to do |format|
       format.html do
-        render action: '_list_note_templates',
-               layout: false,
-               locals: { note_templates: note_templates, global_note_templates: global_note_templates }
+        render partial: 'list_note_templates', # Remove the underscore if it's a filename
+         layout: false,
+         locals: { 
+           note_templates: note_templates, 
+           global_note_templates: global_note_templates, 
+           multiple_note_templates: multiple_note_templates 
+         }
       end
     end
   end

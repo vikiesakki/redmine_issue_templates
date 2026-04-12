@@ -1,0 +1,60 @@
+<div class='contextual issue_templates'>
+  <%= link_to(l(:label_multiple_templates, default: 'Multiple Issue Templates'),
+              { controller: 'multiple_issue_templates', action: 'index' },
+              class: 'icon icon-template') %>
+
+  <%# --- NEW: Multiple Note Templates Link --- %>
+  <%= link_to(l(:label_multiple_note_templates, default: 'Multiple Note Templates'),
+              { controller: 'multiple_note_templates', action: 'index' },
+              class: 'icon icon-copy') %>
+
+  <%# --- Standard Global Issue Link --- %>
+  <%= link_to(l(:global_issue_templates),
+              { controller: 'global_issue_templates', action: 'index' },
+              class: 'icon icon-template') %>
+
+  <%# --- Settings Link --- %>
+  <%= link_to(l(:label_settings),
+              { controller: 'settings', action: 'plugin', id: 'redmine_issue_templates' },
+              class: 'issue_template icon plugins') %>
+
+  <%= link_to l(:label_multiple_note_templates_new, default: 'New Multiple Note Template'), 
+              new_multiple_note_template_path, 
+              class: 'icon icon-add' %>
+</div>
+
+<h2><%= l(:label_multiple_note_templates, default: 'Multiple Note Templates') %></h2>
+
+<table class="list">
+  <thead>
+    <tr>
+      <th><%= l(:field_name) %></th>
+      <th><%= l(:label_tracker_plural) %></th>
+      <th><%= l(:field_author) %></th>
+      <th><%= l(:label_enabled) %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @templates.each do |template| %>
+      <tr class="<%= cycle("odd", "even") %>">
+        <td class="name">
+          <%= link_to template.name, edit_multiple_note_template_path(template) %>
+        </td>
+        <td>
+          <small><%= template.trackers.collect(&:name).join(', ') %></small>
+        </td>
+        <td class="center"><%= template.author %></td>
+        <td class="center"><%= checked_image template.enabled %></td>
+        <td class="buttons">
+          <%= link_to l(:button_edit), edit_multiple_note_template_path(template), class: 'icon icon-edit' %>
+          <%= delete_link multiple_note_template_path(template) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @templates.empty? %>
+  <p class="nodata"><%= l(:label_no_data) %></p>
+<% end %>
