@@ -95,6 +95,30 @@
         </td>
       </tr>
 <% end %>
+<% multiple_templates.each do |template| %>
+      <tr class='<%= cycle('odd', 'even') %> template_data'>
+        <td>
+          <%= template.title %>
+        </td>
+        <td>
+          <%= template.issue_title %>
+        </td>
+        <td>
+          <div class='template_tooltip_wrapper'>
+            <a class='icon-only template_tooltip' href='#' title='<%= l(:label_preview) %>'></a>
+            <div class='wiki template_tooltip_body'>
+              <span class='title'><%= template.issue_title %></span>
+              <%= textilizable(template.description) %>
+            </div>
+          </div>
+        </td>
+        <td class='center'></td>
+        <td>
+          <i data-issue-template-id='<%= template.id %>'
+             class='icon-only icon-test template-update-link template-multiple cursor: pointer;'></i>
+        </td>
+      </tr>
+<% end %>
 </table>
 
 <script type="text/javascript">

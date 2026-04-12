@@ -10,6 +10,18 @@ Rails.application.routes.draw do
     post 'preview', on: :collection
   end
 
+  resources :multiple_issue_templates do
+    collection do
+      get 'load' # For the AJAX call on the "New Issue" page
+    end
+  end
+
+  resources :multiple_note_templates do
+    collection do
+      get 'load' # If you want to load these via AJAX later
+    end
+  end
+
   resources :global_issue_templates, except: [:edit], concerns: %i[tamplate_common previewable]
 
   # for project issue template

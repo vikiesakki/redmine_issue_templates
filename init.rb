@@ -70,6 +70,9 @@ Redmine::Plugin.register :redmine_issue_templates do
                                         issue_templates: %i[index show load set_pulldown list_templates orphaned_templates],
                                         note_templates: %i[index show load list_templates]
       permission :manage_issue_templates, { issue_templates_settings: %i[index edit] }, require: :member
+      permission :manage_multiple_templates, {
+        multiple_issue_templates: [:index, :new, :create, :edit, :update, :destroy]
+      }
     end
   rescue ::Redmine::PluginRequirementError => e
     raise ::Redmine::PluginRequirementError.new(issue_template_version_message(e.message)) # rubocop:disable Style/RaiseArgs

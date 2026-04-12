@@ -83,6 +83,8 @@ class IssueTemplatesController < ApplicationController
     template_type = params[:template_type]
     issue_template = if template_type.present? && template_type == 'global'
                        GlobalIssueTemplate.find(issue_template_id)
+                     elsif template_type.present? && template_type == 'multiple'
+                       MultipleIssueTemplate.find(issue_template_id)
                      else
                        IssueTemplate.find(issue_template_id)
                      end
@@ -99,6 +101,7 @@ class IssueTemplatesController < ApplicationController
     add_templates_to_group(@issue_templates)
     add_templates_to_group(@inherit_templates, class: 'inherited')
     add_templates_to_group(@global_templates, class: 'global')
+    add_templates_to_group(@multiple_templates, class: 'multiple')
 
     if loadable_trigger?
       @group[@default_template].selected = 'selected'
@@ -126,6 +129,7 @@ class IssueTemplatesController < ApplicationController
                locals: { default_template: default_template,
                          issue_templates: @issue_templates,
                          inherit_templates: @inherit_templates,
+                         multiple_templates: @multiple_templates,
                          global_issue_templates: @global_templates }
       end
       format.api do
@@ -133,6 +137,7 @@ class IssueTemplatesController < ApplicationController
                locals: { default_template: default_template,
                          issue_templates: @issue_templates,
                          inherit_templates: @inherit_templates,
+                         multiple_templates: @multiple_templates,
                          global_issue_templates: @global_templates }
       end
     end
@@ -166,6 +171,7 @@ class IssueTemplatesController < ApplicationController
     @issue_templates = issue_templates
     @inherit_templates = inherit_templates
     @global_templates = global_templates(@tracker.id)
+    @multiple_templates = multiple_templates(@tracker.id)
   end
 
   def template
@@ -181,6 +187,13 @@ class IssueTemplatesController < ApplicationController
 
     project_id = apply_all_projects? ? nil : @project.id
     GlobalIssueTemplate.get_templates_for_project_tracker(project_id, tracker_id)
+  end
+
+  def multiple_templates(tracker_id)
+    return [] if templates_exist?
+
+    # project_id = apply_all_projects? ? nil : @project.id
+    MultipleIssueTemplate.for_tracker(tracker_id)
   end
 
   def default_templates

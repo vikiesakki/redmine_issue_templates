@@ -1,0 +1,5 @@
+<h2><%= l(:label_multiple_templates_new, default: 'New Multiple Template') %></h2>
+<%= labelled_form_for @template, url: multiple_issue_templates_path do |f| %>
+  <%= render partial: 'form', locals: { f: f } %>
+  <%= submit_tag l(:button_create) %>
+<% end %>

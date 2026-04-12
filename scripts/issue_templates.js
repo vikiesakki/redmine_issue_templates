@@ -96,6 +96,9 @@ class ISSUE_TEMPLATE {
     if (selectedOption.classList.contains('global')) {
       templateType = 'global';
     }
+    if (selectedOption.classList.contains('multiple')) {
+      templateType = 'multiple';
+    }
 
     axios.post(ns.loadUrl, {
       template_id: selectedTemplate.value,
@@ -391,6 +394,9 @@ class ISSUE_TEMPLATE {
     if (link.classList.contains('template-global')) {
       optionSelector = optionSelector + '[class="global"]';
     }
+    if (link.classList.contains('template-multiple')) {
+      optionSelector = optionSelector + '[class="multiple"]';
+    }
     const targetOption = document.querySelector(optionSelector);
     targetOption['selected'] = true;
 
@@ -548,6 +554,14 @@ class NOTE_TEMPLATE {
 
     if (targetElement.classList.contains('template-global')) {
       JSONdata.note_template.template_type = 'global';
+      JSONdata.note_template.project_id = ns.baseProjectId;
+      if (projectId && projectId.value) {
+        JSONdata.note_template.project_id = projectId.value;
+      }
+    }
+
+    if (targetElement.classList.contains('template-multiple')) {
+      JSONdata.note_template.template_type = 'multiple';
       JSONdata.note_template.project_id = ns.baseProjectId;
       if (projectId && projectId.value) {
         JSONdata.note_template.project_id = projectId.value;

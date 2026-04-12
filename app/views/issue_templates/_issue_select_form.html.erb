@@ -73,7 +73,6 @@
 </div>
 <script type='text/javascript'>
   $(() => {
-    //<![CDATA[
     var templateConfig = {
       pulldownUrl: '<%= pulldown_url %>',
       isTriggeredBy: '<%= is_triggered_by %>',
@@ -82,76 +81,97 @@
       generalTextYes: '<%=h l(:general_text_Yes) %>',
       generalTextNo : '<%=h l(:general_text_No) %>',
       confirmMessage: '<%=h l(:label_template_applied, default: "Issue template is applied. You can revert with click 'Revert' link.") %>'
+    };
+
+    if (typeof ISSUE_TEMPLATE === 'undefined') {
+      console.error('ISSUE_TEMPLATE is not loaded');
+      return;
     }
 
-    var templateNS = templateNS || new ISSUE_TEMPLATE(templateConfig)
-    templateNS.isTriggeredBy = '<%= is_triggered_by %>'
-    templateNS.setPulldown('<%= @issue.tracker.id %>')
+    var templateNS = new ISSUE_TEMPLATE(templateConfig);
+    templateNS.isTriggeredBy = '<%= is_triggered_by %>';
+    templateNS.setPulldown('<%= @issue.tracker.id %>');
 
-    document.getElementById('issue_template').addEventListener('change', (event) => {
-      templateNS.changeTemplatePlace()
-      templateNS.loadTemplate()
-    })
+    /*templateNS.loadTemplate = function(select) {
+      if (!select) return;
 
-    // Show dialog
-    document.getElementById('link_template_dialog').addEventListener('click', (event) => {
-      let templateListUrl = '<%= url_for(controller: 'issue_templates',
-                                         action:'list_templates', project_id: project_id, issue_tracker_id: @issue.tracker.id) %>'
-      let templateListTitle = '<%= "#{l(:issue_template)}: #{@issue.tracker.name}".html_safe %>'
+      var selected = select.options[select.selectedIndex];
+      if (!selected) return;
 
-      templateNS.openDialog(templateListUrl, templateListTitle)
-    })
+      var templateId = selected.value;
+      var templateType = selected.getAttribute('data-template-type') || '';
 
-    // revert template
-    document.getElementById('revert_template').addEventListener('click', (event) => {
-      templateNS.revertAppliedTemplate()
-    })
+      if (!templateId) return;
 
-    document.getElementById('erase_template').addEventListener('click', (event) => {
-      templateNS.eraseSubjectAndDescription()
-    })
+      $.ajax({
+        url: templateNS.loadUrl,
+        type: 'GET',
+        dataType: 'json',
+        data: {
+          template_id: templateId,
+          template_type: templateType
+        },
+        success: function(data) {
+          $('#issue_subject').val(data.issue_title || '');
+          $('#issue_description').val(data.description || '');
 
-    // keydown keyup
-    document.querySelector("input[name='template_search_filter']").addEventListener('keydown', (event) => {
-      templateNS.filterTemplate(event)
-    })
-
-    document.querySelector("input[name='template_search_filter']").addEventListener('keyup', (event) => {
-      templateNS.filterTemplate(event)
-    })
-
-    // NOTE: Workaround for GitHub issue: 193
-    // Start observing the target node for configured mutations
-    try {
-      if (CKEDITOR.instances) {
-        // Create an observer instance linked to the callback function
-        let observer = new MutationObserver(callback)
-
-        // Select the node that will be observed for mutations
-        let targetNode = document.querySelector('#issue_description_and_toolbar')
-
-        // Options for the observer (which mutations to observe)
-        let config = { attributes: true, childList: true, characterData: true, subtree: true }
-
-        // Callback function to execute when mutations are observed
-        let callback = function (mutationsList) {
-          for (let i = 0, len = mutationsList.length; i < len; ++i) {
-            let mutation = mutationsList[i]
-            if (mutation.type === 'attributes') {
-              console.log('The ' + mutation.attributeName + ' attribute was modified.')
-              if (mutation.target.className == 'cke_contents cke_reset') {
-                // Wait for a while til CKE Editor's textarea is rendered, and after that
-                // apply template text.
-                setTimeout('templateNS.replaceCkeContent()', 200)
-                observer.disconnect()
-              }
-            }
+          if (typeof CKEDITOR !== 'undefined' &&
+              CKEDITOR.instances &&
+              CKEDITOR.instances.issue_description) {
+            CKEDITOR.instances.issue_description.setData(data.description || '');
           }
+        },
+        error: function(xhr) {
+          console.log('Template load failed');
+          console.log(xhr.responseText);
         }
-        observer.observe(targetNode, config)
-      }
-    } catch (e) {
-      // do nothing.
+      });
+    };*/
+
+    var issueTemplateSelect = document.getElementById('issue_template');
+    if (issueTemplateSelect) {
+      issueTemplateSelect.addEventListener('change', function () {
+        templateNS.changeTemplatePlace();
+        templateNS.loadTemplate(this);
+      });
+    }
+
+    var dialogLink = document.getElementById('link_template_dialog');
+    if (dialogLink) {
+      dialogLink.addEventListener('click', function () {
+        let templateListUrl = '<%= url_for(controller: 'issue_templates',
+                                           action:'list_templates',
+                                           project_id: project_id,
+                                           issue_tracker_id: @issue.tracker.id) %>';
+        let templateListTitle = '<%= "#{l(:issue_template)}: #{@issue.tracker.name}".html_safe %>';
+
+        templateNS.openDialog(templateListUrl, templateListTitle);
+      });
+    }
+
+    var revertBtn = document.getElementById('revert_template');
+    if (revertBtn) {
+      revertBtn.addEventListener('click', function () {
+        templateNS.revertAppliedTemplate();
+      });
+    }
+
+    var eraseBtn = document.getElementById('erase_template');
+    if (eraseBtn) {
+      eraseBtn.addEventListener('click', function () {
+        templateNS.eraseSubjectAndDescription();
+      });
+    }
+
+    var searchInput = document.querySelector("input[name='template_search_filter']");
+    if (searchInput) {
+      searchInput.addEventListener('keydown', function (event) {
+        templateNS.filterTemplate(event);
+      });
+
+      searchInput.addEventListener('keyup', function (event) {
+        templateNS.filterTemplate(event);
+      });
     }
   });
 </script>
