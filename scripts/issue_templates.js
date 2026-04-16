@@ -25,7 +25,6 @@ class ISSUE_TEMPLATE {
     this.generalTextYes = config.generalTextYes;
     this.generalTextNo = config.generalTextNo;
     this.isTriggeredBy = config.isTriggeredBy;
-
     // Keep instance context stable even if page-level scripts wrap or defer these methods.
     this.clearValue = this.clearValue.bind(this);
     this.getDescriptionValue = this.getDescriptionValue.bind(this);
@@ -48,6 +47,10 @@ class ISSUE_TEMPLATE {
     this.checkSelectedWatchers = this.checkSelectedWatchers.bind(this);
     this.filterTemplate = this.filterTemplate.bind(this);
     this.changeTemplatePlace = this.changeTemplatePlace.bind(this);
+    this.loadTemplate = this.loadTemplate.bind(this);
+    this.replaceTemplateValue = this.replaceTemplateValue.bind(this);
+    this.eraseSubjectAndDescription = this.eraseSubjectAndDescription.bind(this);
+    this.updateTemplateSelect = this.updateTemplateSelect.bind(this);
   }
   clearValue(id) {
     const target = document.getElementById(id);
