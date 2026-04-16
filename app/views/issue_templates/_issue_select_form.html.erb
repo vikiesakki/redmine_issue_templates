@@ -92,6 +92,22 @@
     templateNS.isTriggeredBy = '<%= is_triggered_by %>';
     templateNS.setPulldown('<%= @issue.tracker.id %>');
 
+    var boundLoadTemplate = function () {
+      return templateNS.loadTemplate();
+    };
+    var boundOpenDialog = function (templateListUrl, templateListTitle) {
+      return templateNS.openDialog(templateListUrl, templateListTitle);
+    };
+    var boundRevertTemplate = function () {
+      return templateNS.revertAppliedTemplate();
+    };
+    var boundEraseTemplate = function () {
+      return templateNS.eraseSubjectAndDescription();
+    };
+    var boundFilterTemplate = function (event) {
+      return templateNS.filterTemplate(event);
+    };
+
     /*templateNS.loadTemplate = function(select) {
       if (!select) return;
 
@@ -132,7 +148,7 @@
     if (issueTemplateSelect) {
       issueTemplateSelect.addEventListener('change', function () {
         templateNS.changeTemplatePlace();
-        templateNS.loadTemplate(this);
+        boundLoadTemplate();
       });
     }
 
@@ -145,7 +161,7 @@
                                            issue_tracker_id: @issue.tracker.id) %>';
         let templateListTitle = '<%= "#{l(:issue_template)}: #{@issue.tracker.name}".html_safe %>';
 
-        templateNS.openDialog(templateListUrl, templateListTitle);
+        boundOpenDialog(templateListUrl, templateListTitle);
       });
     }
 
@@ -154,7 +170,7 @@
       revertBtn.addEventListener('click', function (event) {
         event.preventDefault();
         if (revertBtn.classList.contains('disabled')) return false;
-        templateNS.revertAppliedTemplate();
+        boundRevertTemplate();
       });
     }
 
@@ -162,18 +178,18 @@
     if (eraseBtn) {
       eraseBtn.addEventListener('click', function (event) {
         event.preventDefault();
-        templateNS.eraseSubjectAndDescription();
+        boundEraseTemplate();
       });
     }
 
     var searchInput = document.querySelector("input[name='template_search_filter']");
     if (searchInput) {
       searchInput.addEventListener('keydown', function (event) {
-        templateNS.filterTemplate(event);
+        boundFilterTemplate(event);
       });
 
       searchInput.addEventListener('keyup', function (event) {
-        templateNS.filterTemplate(event);
+        boundFilterTemplate(event);
       });
     }
   });
