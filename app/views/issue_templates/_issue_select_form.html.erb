@@ -151,14 +151,17 @@
 
     var revertBtn = document.getElementById('revert_template');
     if (revertBtn) {
-      revertBtn.addEventListener('click', function () {
+      revertBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        if (revertBtn.classList.contains('disabled')) return false;
         templateNS.revertAppliedTemplate();
       });
     }
 
     var eraseBtn = document.getElementById('erase_template');
     if (eraseBtn) {
-      eraseBtn.addEventListener('click', function () {
+      eraseBtn.addEventListener('click', function (event) {
+        event.preventDefault();
         templateNS.eraseSubjectAndDescription();
       });
     }

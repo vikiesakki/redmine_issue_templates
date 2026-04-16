@@ -25,6 +25,29 @@ class ISSUE_TEMPLATE {
     this.generalTextYes = config.generalTextYes;
     this.generalTextNo = config.generalTextNo;
     this.isTriggeredBy = config.isTriggeredBy;
+
+    // Keep instance context stable even if page-level scripts wrap or defer these methods.
+    this.clearValue = this.clearValue.bind(this);
+    this.getDescriptionValue = this.getDescriptionValue.bind(this);
+    this.setDescriptionValue = this.setDescriptionValue.bind(this);
+    this.getSubjectValue = this.getSubjectValue.bind(this);
+    this.setSubjectValue = this.setSubjectValue.bind(this);
+    this.eraseSubjectAndDescription = this.eraseSubjectAndDescription.bind(this);
+    this.openDialog = this.openDialog.bind(this);
+    this.revertAppliedTemplate = this.revertAppliedTemplate.bind(this);
+    this.loadTemplate = this.loadTemplate.bind(this);
+    this.replaceTemplateValue = this.replaceTemplateValue.bind(this);
+    this.confirmToReplaceContent = this.confirmToReplaceContent.bind(this);
+    this.showLoadedMessage = this.showLoadedMessage.bind(this);
+    this.setPulldown = this.setPulldown.bind(this);
+    this.setRelatedLink = this.setRelatedLink.bind(this);
+    this.builtinFields = this.builtinFields.bind(this);
+    this.updateFieldValue = this.updateFieldValue.bind(this);
+    this.updateFieldValues = this.updateFieldValues.bind(this);
+    this.updateTemplateSelect = this.updateTemplateSelect.bind(this);
+    this.checkSelectedWatchers = this.checkSelectedWatchers.bind(this);
+    this.filterTemplate = this.filterTemplate.bind(this);
+    this.changeTemplatePlace = this.changeTemplatePlace.bind(this);
   }
   clearValue(id) {
     const target = document.getElementById(id);
@@ -33,17 +56,50 @@ class ISSUE_TEMPLATE {
     }
     target.value = '';
   }
-  eraseSubjectAndDescription() {
-    this.clearValue('issue_description');
-    this.clearValue('issue_subject');
+  getDescriptionValue() {
+    const issueDescription = document.getElementById('issue_description');
+    if (issueDescription == null) return '';
 
     try {
-      if (CKEDITOR.instances.issue_description) {
-        CKEDITOR.instances.issue_description.setData('');
+      if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances.issue_description) {
+        return CKEDITOR.instances.issue_description.getData();
       }
     } catch (e) {
-      // do nothing.
+      // Fall back to the textarea value.
     }
+
+    return issueDescription.value || '';
+  }
+  setDescriptionValue(value) {
+    const issueDescription = document.getElementById('issue_description');
+    if (issueDescription == null) return;
+
+    issueDescription.value = value || '';
+
+    try {
+      if (typeof CKEDITOR !== 'undefined' && CKEDITOR.instances.issue_description) {
+        CKEDITOR.instances.issue_description.setData(value || '');
+      }
+    } catch (e) {
+      // Textarea update above is enough when CKEditor is not active.
+    }
+  }
+  getSubjectValue() {
+    const issueSubject = document.getElementById('issue_subject');
+    return issueSubject ? issueSubject.value || '' : '';
+  }
+  setSubjectValue(value) {
+    const issueSubject = document.getElementById('issue_subject');
+    if (issueSubject) {
+      issueSubject.value = value || '';
+    }
+  }
+  eraseSubjectAndDescription() {
+    if (!document.getElementById('issue_subject') && !document.getElementById('issue_description')) {
+      return;
+    }
+    this.setDescriptionValue('');
+    this.setSubjectValue('');
   }
   openDialog(url, title) {
     // Open dialog (modal window) to display selectable templates list.
@@ -61,29 +117,24 @@ class ISSUE_TEMPLATE {
     });
   }
   revertAppliedTemplate() {
-    const issueSubject = document.getElementById('issue_subject');
     const oldSubject = document.getElementById('original_subject');
-
-    const issueDescription = document.getElementById('issue_description');
     const oldDescription = document.getElementById('original_description');
-    const ns = this;
+    const revertButton = document.getElementById('revert_template');
 
-    issueSubject.value = ns.escapeHTML(oldSubject.textContent);
-
-    if (issueDescription != null) {
-      issueDescription.value = ns.escapeHTML(oldDescription.textContent);
+    if (oldSubject == null || oldDescription == null) {
+      return;
     }
 
-    try {
-      if (CKEDITOR.instances.issue_description) {
-        CKEDITOR.instances.issue_description.setData(ns.escapeHTML(oldDescription.text()));
-      }
-    } catch (e) {
-      // do nothing.
+    this.setSubjectValue(oldSubject.textContent || '');
+    this.setDescriptionValue(oldDescription.textContent || '');
+
+    oldSubject.textContent = '';
+    oldDescription.textContent = '';
+    oldSubject.dataset.captured = '';
+    oldDescription.dataset.captured = '';
+    if (revertButton) {
+      revertButton.classList.add('disabled');
     }
-    oldDescription.textContent = '';
-    oldDescription.textContent = '';
-    document.getElementById('revert_template').classList.add('disabled');
   }
   loadTemplate() {
     const selectedTemplate = document.getElementById('issue_template');
@@ -122,10 +173,13 @@ class ISSUE_TEMPLATE {
 
       const issueSubject = document.getElementById('issue_subject');
       const issueDescription = document.getElementById('issue_description');
+      if (issueSubject == null && issueDescription == null) {
+        return;
+      }
 
       this.loadedTemplate = obj;
 
-      if (ns.shouldReplaced === 'true' && ((issueDescription !== null && issueDescription.value !== '') || issueSubject.value !== '')) {
+      if (ns.shouldReplaced === 'true' && ((issueDescription !== null && issueDescription.value !== '') || (issueSubject !== null && issueSubject.value !== ''))) {
         if (obj.description !== '' || obj.issue_title !== '') {
           const hideConfirmFlag = ns.hideOverwiteConfirm();
           if (hideConfirmFlag === false) {
@@ -143,46 +197,50 @@ class ISSUE_TEMPLATE {
     let oldSubj = '';
     const issueSubject = document.getElementById('issue_subject');
     const issueDescription = document.getElementById('issue_description');
-
-    if (issueDescription != null) {
-      const originalDescription = document.getElementById('original_description');
-      if (issueDescription.value !== '' && ns.shouldReplaced === 'false') {
-        oldVal = issueDescription.value + '\n\n';
-      }
-
-      originalDescription.textContent = issueDescription.value;
-
-      issueDescription.getAttribute('original_description', issueDescription.value);
-      if (oldVal.replace(/(?:\r\n|\r|\n)/g, '').trim() !== obj.description.replace(/(?:\r\n|\r|\n)/g, '').trim()) {
-        issueDescription.value = oldVal + obj.description;
-      }
-    }
-
+    const originalDescription = document.getElementById('original_description');
     const originalSubject = document.getElementById('original_subject');
-    if (issueSubject.value !== '' && ns.shouldReplaced === 'false') {
-      oldSubj = issueSubject.value + ' ';
-    }
-    originalSubject.textContent = issueSubject.value;
+    const currentDescription = ns.getDescriptionValue();
+    const currentSubject = ns.getSubjectValue();
+    const revertButton = document.getElementById('revert_template');
 
-    issueSubject.setAttribute('original_title', issueSubject.value);
-    if (oldSubj.trim() !== obj.issue_title.trim()) {
-      issueSubject.value = oldSubj + obj.issue_title;
+    if (issueSubject == null && issueDescription == null) {
+      return;
     }
 
-    try {
-      if (CKEDITOR.instances.issue_description) {
-        CKEDITOR.instances.issue_description.setData(oldVal + obj.description);
+    if (issueDescription != null && originalDescription != null) {
+      if (currentDescription !== '' && ns.shouldReplaced === 'false') {
+        oldVal = currentDescription + '\n\n';
       }
-    } catch (e) {
-      // do nothing.
+
+      if (originalDescription.dataset.captured !== 'true') {
+        originalDescription.textContent = currentDescription;
+        originalDescription.dataset.captured = 'true';
+      }
+
+      if (oldVal.replace(/(?:\r\n|\r|\n)/g, '').trim() !== obj.description.replace(/(?:\r\n|\r|\n)/g, '').trim()) {
+        ns.setDescriptionValue(oldVal + obj.description);
+      }
     }
+
+    if (issueSubject != null && currentSubject !== '' && ns.shouldReplaced === 'false') {
+      oldSubj = currentSubject + ' ';
+    }
+    if (issueSubject != null && originalSubject != null && originalSubject.dataset.captured !== 'true') {
+      originalSubject.textContent = currentSubject;
+      originalSubject.dataset.captured = 'true';
+    }
+
+    if (issueSubject != null && oldSubj.trim() !== obj.issue_title.trim()) {
+      ns.setSubjectValue(oldSubj + obj.issue_title);
+    }
+
     // show message just after default template loaded.
     if (ns.confirmMsg && ns.shouldReplaced) {
       ns.showLoadedMessage(issueDescription);
     }
 
-    if (originalSubject.textContent.length > 0) {
-      document.getElementById('revert_template').classList.remove('disabled');
+    if (revertButton && ((originalSubject && originalSubject.dataset.captured === 'true') || (originalDescription && originalDescription.dataset.captured === 'true'))) {
+      revertButton.classList.remove('disabled');
     }
 
     ns.setRelatedLink(obj);
@@ -192,11 +250,19 @@ class ISSUE_TEMPLATE {
   confirmToReplaceContent(obj) {
     const ns = this;
     const dialog = document.getElementById('issue_template_confirm_to_replace_dialog');
+    const overwriteYes = document.getElementById('overwrite_yes');
+    const overwriteNo = document.getElementById('overwrite_no');
+    const cancelButton = document.getElementById('issue_template_confirm_to_replace_dialog_cancel');
+    const hideDialogCheckbox = document.getElementById('issue_template_confirm_to_replace_hide_dialog');
+    if (dialog == null || overwriteYes == null || overwriteNo == null || cancelButton == null || hideDialogCheckbox == null) {
+      ns.replaceTemplateValue(obj);
+      return;
+    }
     dialog.style.visibility = 'visible';
     dialog.classList.add('active');
 
-    document.getElementById('overwrite_yes').addEventListener('click', () => {
-      if (document.getElementById('issue_template_confirm_to_replace_hide_dialog').checked) {
+    overwriteYes.addEventListener('click', () => {
+      if (hideDialogCheckbox.checked) {
         // NOTE: Use document.cookie because Redmine itself does not use jquery.cookie.js.
         document.cookie = 'issue_template_confirm_to_replace_hide_dialog=1';
       } else {
@@ -206,8 +272,8 @@ class ISSUE_TEMPLATE {
       ns.replaceTemplateValue(obj);
     });
 
-    document.getElementById('overwrite_no').addEventListener('click', () => {
-      if (document.getElementById('issue_template_confirm_to_replace_hide_dialog').checked) {
+    overwriteNo.addEventListener('click', () => {
+      if (hideDialogCheckbox.checked) {
         // NOTE: Use document.cookie because Redmine itself does not use jquery.cookie.js.
         document.cookie = 'issue_template_confirm_to_replace_hide_dialog=1';
       } else {
@@ -216,10 +282,9 @@ class ISSUE_TEMPLATE {
       dialog.classList.remove('active');
     });
 
-    document.getElementById('issue_template_confirm_to_replace_dialog_cancel')
-      .addEventListener('click', () => {
-        dialog.classList.remove('active');
-      });
+    cancelButton.addEventListener('click', () => {
+      dialog.classList.remove('active');
+    });
   }
   showLoadedMessage() {
     const ns = this;
@@ -266,6 +331,9 @@ class ISSUE_TEMPLATE {
   }
   setRelatedLink(obj) {
     const relatedLink = document.getElementById('issue_template_related_link');
+    if (relatedLink == null || obj == null) {
+      return;
+    }
     if (obj.related_link != null && obj.related_link !== '') {
       relatedLink.setAttribute('href', obj.related_link);
       relatedLink.style.display = 'inline';
@@ -286,6 +354,9 @@ class ISSUE_TEMPLATE {
   }
   replaceCkeContent() {
     const element = document.getElementById('issue_description');
+    if (element == null || typeof CKEDITOR === 'undefined' || !CKEDITOR.instances.issue_description) {
+      return;
+    }
     return CKEDITOR.instances.issue_description.setData(element.value);
   }
   hideOverwiteConfirm() {
