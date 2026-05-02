@@ -8,13 +8,15 @@ module IssueTemplateCommon
   #
   included do
     belongs_to :author, class_name: 'User', foreign_key: 'author_id'
-    belongs_to :tracker
-    before_save :check_default
+
+    has_single_tracker = table_exists? && column_names.include?('tracker_id')
+    belongs_to :tracker if has_single_tracker
+    before_save :check_default, if: -> { respond_to?(:check_default, true) }
 
     before_destroy :confirm_disabled
 
     validates :title, presence: true
-    validates :tracker, presence: true
+    validates :tracker, presence: true if has_single_tracker
     validates :description, presence: true
     validates :related_link, format: { with: URI::DEFAULT_PARSER.make_regexp }, allow_blank: true
 
